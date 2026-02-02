@@ -6,73 +6,112 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
+  :root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --primary: #2563eb;
+    --secondary: #64748b;
+    --border: #e2e8f0;
+    --active: #e0f2fe;
+    --text: #1e293b;
+    --muted: #64748b;
+    --radius: 12px;
+  }
+
   body {
     font-family: system-ui, -apple-system, Segoe UI;
-    background: #f4f7fb;
+    background: var(--bg);
     margin: 0;
-    padding: 16px;
+    padding: 12px;
+    color: var(--text);
   }
 
   .card {
     max-width: 900px;
     margin: auto;
-    background: #ffffff;
-    border-radius: 12px;
+    background: var(--card);
+    border-radius: var(--radius);
     padding: 16px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 24px rgba(15,23,42,0.08);
   }
 
   h2 {
     text-align: center;
-    margin-bottom: 14px;
+    margin: 6px 0 14px;
+    font-weight: 600;
   }
 
+  /* Sticky action bar */
   .top-actions {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--card);
+    padding: 10px 0;
+    margin-bottom: 12px;
     display: flex;
     gap: 12px;
     justify-content: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
   }
 
   button {
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
     border: none;
     font-size: 15px;
     cursor: pointer;
-    background: #2563eb;
-    color: #ffffff;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 500;
   }
 
   button.secondary {
-    background: #64748b;
+    background: var(--secondary);
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-  }
-
-  th, td {
-    border: 1px solid #e2e8f0;
-    padding: 10px;
+    margin-top: 6px;
   }
 
   th {
-    background: #e0ecff;
+    background: #f1f5f9;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px;
+    border-bottom: 2px solid var(--border);
     text-align: left;
+  }
+
+  td {
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
   }
 
   input, select {
     width: 100%;
-    padding: 8px;
+    padding: 10px;
     font-size: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
     box-sizing: border-box;
+    background: #fff;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
   }
 
   tr.active-row {
-    background: #e0f2fe;
+    background: var(--active);
+  }
+
+  tr.active-row td {
+    border-bottom-color: #bae6fd;
   }
 
   /* Scanner overlay */
@@ -80,7 +119,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.9);
     z-index: 1000;
     padding: 16px;
   }
@@ -92,7 +131,27 @@
 
   .scanner-actions {
     text-align: center;
-    margin-top: 12px;
+    margin-top: 14px;
+  }
+
+  .scanner-actions button {
+    width: 180px;
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 600px) {
+    th {
+      font-size: 13px;
+    }
+
+    button {
+      width: 100%;
+    }
+
+    .top-actions {
+      flex-direction: column;
+      gap: 8px;
+    }
   }
 </style>
 </head>
@@ -104,15 +163,15 @@
 
   <div class="top-actions">
     <button onclick="startScan()">📷 Scan Container</button>
-    <button class="secondary" onclick="downloadExcel()">Download Excel</button>
+    <button class="secondary" onclick="downloadExcel()">⬇ Download Excel</button>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>Container ID</th>
-        <th>Type</th>
-        <th>Count</th>
+        <th style="width:45%">Container ID</th>
+        <th style="width:35%">Type</th>
+        <th style="width:20%">Count</th>
       </tr>
     </thead>
     <tbody id="dataBody"></tbody>
