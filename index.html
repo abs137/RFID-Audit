@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Container Tag Entry</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  body { font-family: system-ui; padding:16px; background:#f4f7fb; }
+  table { width:100%; border-collapse: collapse; background:#fff; }
+  th, td { border:1px solid #ddd; padding:8px; }
+  th { background:#e0ecff; }
+  input, select { width:100%; padding:6px; }
+  button { padding:6px 10px; }
+
+  tr.active-row { background:#e0f2fe; }
+
+  #scannerWrap {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#000000dd;
+    z-index:1000;
+    padding:10px;
+  }
+  #qr-reader { max-width:360px; margin:auto; }
+</style>
+</head>
+
+<body>
+
+<h3>Container Tag Entry</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Container ID</th>
+      <th>Type</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody id="dataBody"></tbody>
+</table>
+
+<div style="margin-top:16px; text-align:center;">
+  <button onclick="downloadExcel()">Download Excel</button>
+</div>
+
+<div id="scannerWrap">
+  <div id="qr-reader"></div>
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="stopScan()">Stop Camera</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
