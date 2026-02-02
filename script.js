@@ -7,9 +7,9 @@ const TYPE_OPTIONS = [
 ];
 
 let tableBody;
+let activeRow = null;
 let html5QrCode = null;
 let scannerActive = false;
-let activeInput = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   tableBody = document.getElementById("dataBody");
@@ -22,18 +22,13 @@ function addRow() {
 
   const tdId = document.createElement("td");
   const idInput = document.createElement("input");
-  idInput.placeholder = "Scan / Enter";
+  idInput.placeholder = "Enter / Scan";
   tdId.appendChild(idInput);
-
-  const scanBtn = document.createElement("button");
-  scanBtn.textContent = "📷";
-  scanBtn.type = "button";
-  scanBtn.onclick = () => startScan(idInput);
-  tdId.appendChild(scanBtn);
 
   const tdType = document.createElement("td");
   const typeSel = document.createElement("select");
-  typeSel.innerHTML = `<option value="">Select</option>` +
+  typeSel.innerHTML =
+    `<option value="">Select</option>` +
     TYPE_OPTIONS.map(v => `<option>${v}</option>`).join("");
   tdType.appendChild(typeSel);
 
@@ -66,14 +61,15 @@ function addRow() {
 function setActiveRow(row) {
   document.querySelectorAll("tr").forEach(r => r.classList.remove("active-row"));
   row.classList.add("active-row");
+  activeRow = row;
 }
 
 /* ---------- SCANNER ---------- */
-async function startScan(input) {
-  if (scannerActive) return;
+async function startScan() {
+  if (scannerActive) return alert("Scanner already open");
+  if (!activeRow) return alert("Select a row first");
 
   scannerActive = true;
-  activeInput = input;
   document.body.style.overflow = "hidden";
   document.getElementById("scannerWrap").style.display = "block";
 
@@ -82,9 +78,9 @@ async function startScan(input) {
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     decoded => {
-      activeInput.value = decoded.trim();
+      activeRow.querySelector("input").value = decoded.trim();
       stopScan();
-      activeInput.closest("tr").querySelector("select").focus();
+      activeRow.querySelector("select").focus();
     }
   );
 }
@@ -102,13 +98,13 @@ async function stopScan() {
 
 /* ---------- EXCEL ---------- */
 function downloadExcel() {
-  const data = [];
+  const rows = [];
   const ts = new Date().toLocaleString();
 
   document.querySelectorAll("#dataBody tr").forEach(r => {
     const inputs = r.querySelectorAll("input, select");
     if (inputs[0].value && inputs[1].value && inputs[2].value) {
-      data.push({
+      rows.push({
         "Container ID": inputs[0].value,
         "Type": inputs[1].value,
         "Count": inputs[2].value,
@@ -117,9 +113,9 @@ function downloadExcel() {
     }
   });
 
-  if (!data.length) return alert("No data");
+  if (!rows.length) return alert("No data to download");
 
-  const ws = XLSX.utils.json_to_sheet(data);
+  const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Data");
   XLSX.writeFile(wb, "Container_Tag_Data.xlsx");
