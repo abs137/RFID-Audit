@@ -41,7 +41,6 @@
     font-weight: 600;
   }
 
-  /* Sticky action bar */
   .top-actions {
     position: sticky;
     top: 0;
@@ -114,7 +113,6 @@
     border-bottom-color: #bae6fd;
   }
 
-  /* Scanner overlay */
   #scannerWrap {
     display: none;
     position: fixed;
@@ -138,20 +136,10 @@
     width: 180px;
   }
 
-  /* Mobile tweaks */
   @media (max-width: 600px) {
-    th {
-      font-size: 13px;
-    }
-
-    button {
-      width: 100%;
-    }
-
-    .top-actions {
-      flex-direction: column;
-      gap: 8px;
-    }
+    th { font-size: 13px; }
+    button { width: 100%; }
+    .top-actions { flex-direction: column; gap: 8px; }
   }
 </style>
 </head>
@@ -178,7 +166,6 @@
   </table>
 </div>
 
-<!-- Scanner Overlay -->
 <div id="scannerWrap">
   <div id="qr-reader"></div>
   <div class="scanner-actions">
@@ -188,7 +175,145 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="script.js"></script>
+
+<script>
+const TYPE_OPTIONS = [
+  "Tag Missing",
+  "Double Tag",
+  "Tag Damage",
+  "Invalid Tag",
+  "Tag Wrong"
+];
+
+let tableBody;
+let activeRow = null;
+let html5QrCode = null;
+let scannerActive = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+  tableBody = document.getElementById("dataBody");
+  addRow();
+});
+
+function addRow() {
+  const tr = document.createElement("tr");
+
+  const tdId = document.createElement("td");
+  const idInput = document.createElement("input");
+  idInput.placeholder = "Enter or Scan";
+  tdId.appendChild(idInput);
+
+  const tdType = document.createElement("td");
+  const typeSelect = document.createElement("select");
+  typeSelect.innerHTML =
+    `<option value="">Select</option>` +
+    TYPE_OPTIONS.map(v => `<option value="${v}">${v}</option>`).join("");
+  tdType.appendChild(typeSelect);
+
+  const tdCount = document.createElement("td");
+  const countInput = document.createElement("input");
+  countInput.type = "number";
+  countInput.min = "0";
+  tdCount.appendChild(countInput);
+
+  tr.append(tdId, tdType, tdCount);
+  tableBody.appendChild(tr);
+
+  tr.addEventListener("click", () => setActiveRow(tr));
+
+  [idInput, typeSelect, countInput].forEach(el => {
+    el.addEventListener("focus", () => setActiveRow(tr));
+  });
+
+  typeSelect.addEventListener("change", () => {
+    if (typeSelect.value) countInput.focus();
+  });
+
+  countInput.addEventListener("change", () => {
+    if (idInput.value && typeSelect.value && countInput.value) {
+      if (tr === tableBody.lastElementChild) {
+        addRow();
+        tableBody.lastElementChild.querySelector("input").focus();
+      }
+    }
+  });
+}
+
+function setActiveRow(row) {
+  document.querySelectorAll("#dataBody tr")
+    .forEach(r => r.classList.remove("active-row"));
+  row.classList.add("active-row");
+  activeRow = row;
+}
+
+async function startScan() {
+  if (scannerActive) return alert("Scanner already open");
+  if (!activeRow) return alert("Please select a row first");
+
+  scannerActive = true;
+  document.body.style.overflow = "hidden";
+  document.getElementById("scannerWrap").style.display = "block";
+
+  html5QrCode = new Html5Qrcode("qr-reader");
+
+  try {
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: { width: 220, height: 220 } },
+      decodedText => {
+        activeRow.querySelector("input").value = decodedText.trim();
+        stopScan();
+        activeRow.querySelector("select").focus();
+      }
+    );
+  } catch {
+    alert("Camera could not start");
+    stopScan();
+  }
+}
+
+async function stopScan() {
+  if (html5QrCode) {
+    try {
+      await html5QrCode.stop();
+      await html5QrCode.clear();
+    } catch {}
+  }
+  html5QrCode = null;
+  scannerActive = false;
+  document.body.style.overflow = "";
+  document.getElementById("scannerWrap").style.display = "none";
+}
+
+function downloadExcel() {
+  const rows = [];
+  const timestamp = new Date().toLocaleString();
+
+  document.querySelectorAll("#dataBody tr").forEach(tr => {
+    const inputs = tr.querySelectorAll("input, select");
+    if (inputs[0].value && inputs[1].value && inputs[2].value) {
+      rows.push({
+        "Container ID": inputs[0].value,
+        "Type": inputs[1].value,
+        "Count": inputs[2].value,
+        "Entry Date": timestamp
+      });
+    }
+  });
+
+  if (!rows.length) return alert("No data to download");
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+  const fileName = `Container_Tag_Data_${new Date()
+    .toISOString()
+    .slice(0,10)}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+}
+</script>
 
 </body>
 </html>
